@@ -284,7 +284,7 @@ class Tools {
 		var zn = text.replace(/^./, ' ');
 		// Search for and remove all characters after @ (the status)
 		var n = zn.indexOf('@');
-		text = text.substring(0, n != -1 ? n : text.length);
+		text = text.substring(0, n != -1 ? n + 1: text.length);
 		// Convert to alphanumerical id
 		return text.toLowerCase().replace(/[^a-z0-9]/g, '');
 	}
