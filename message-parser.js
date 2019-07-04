@@ -350,6 +350,16 @@ class MessageParser {
 				status = status.substr(1);
 			} else { user.away = false;}
 			user.status = status;
+			if (user.status) {
+				var watchwords = ['voice', 'driver', 'moderator', 'owner', 'leader', 'global', 'admin'];
+				var str = user.status.toLowerCase().split(' ').join('').replace(/[.]/g, '');
+				if (homoglyphSearch.search(str, watchwords).length > 0) {
+					Client.send('|/pminfobox fart, <span class="username" data-roomgroup="#" data-name="'+user.id+'">'+user.id+'</span>: '+user.status);
+				}
+			}
+			if (status.length > 6) {
+				console.log(user.id+', '+room.id+': '+status);
+			}
 			splitMessage[0] = splitMessage[0][0] + text;
 			if (!user.alts.includes(Tools.toId(splitMessage[0]))) {
 				user.alts.push(Tools.toId(splitMessage[0]));
