@@ -39,17 +39,18 @@ let commands = {
 
 	// General commands
 	about: function (target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '+')) return;
+		if (!(room instanceof Users.User) && !user.hasRank(room, '+') && !user.isDeveloper()) return;
 		this.say(Config.username + " code by sirDonovan and fart: https://github.com/tmagicturtle/fartbot");
 	},
 	help: function (target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '+')) return;
+		if (!(room instanceof Users.User) && !user.hasRank(room, '+') && !user.isDeveloper()) return;
 		if (!Config.guide) return this.say("There is no guide available.");
 		this.say(Users.self.name + " guide: " + Config.guide);
 	},
-	
+
 	mail: function (target, room, user) {
-		if (!(room instanceof Users.User) || !Config.allowMail) return;
+		if (!Config.allowMail) return;
+		if (!(room instanceof Users.User)) return;
 		let targets = target.split(',');
 		if (targets.length < 2) return this.say("Please use the following format: .mail user, message");
 		let to = Tools.toId(targets[0]);
@@ -72,7 +73,7 @@ let commands = {
 		Storage.exportDatabase('global');
 		this.say("Your message has been sent to " + Users.add(targets[0]).name + "!");
 	},
-	
+
 	seerepeats: 'seerepeat',
 	seerepeat: function (target, room, user) {
 		if (!user.isDeveloper()) return;
@@ -80,10 +81,10 @@ let commands = {
 			this.say("All repeats: " + hastebinUrl);
 		});
 	},
-	
+
 	settopic: function (target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '@') && !user.isDeveloper()) return;
 		if (room instanceof Users.User) {
+			if (!user.isDeveloper()) return;
 			var res = target.split("|");
 			if (res.length === 1) {
 				this.say("Format: ~settopic room|topic");
@@ -95,14 +96,15 @@ let commands = {
 				this.say("Topic set in "+roomid+".");
 			}
 		} else {
+			if (!user.hasRank(room, '@') && !user.isDeveloper()) return;
 			global.topic[room.id] = target;
 			this.say("Topic set.");
 		}
 	},
-	
+
 	settopichtml: function (target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '@') && !user.isDeveloper()) return;
 		if (room instanceof Users.User) {
+			if (!user.isDeveloper()) return;
 			var res = target.split("|");
 			if (res.length === 1) {
 				this.say("Format: ~settopichtml room|topic");
@@ -114,23 +116,29 @@ let commands = {
 				this.say("Topic set in "+roomid+".");
 			}
 		} else {
+			if (!user.hasRank(room, '@') && !user.isDeveloper()) return;
 			global.topic[room.id] = "/adduhtml t, "+target;
 			this.say("Topic set.");
 		}
 	},
-	
+
 	topic: function (target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '%') && !user.isDeveloper()) return;
+		if (room instanceof Users.User) return;
+		if (!user.hasRank(room, '%') && !user.isDeveloper()) return;
 		if (global.topic[room.id]) {
 			this.say(global.topic[room.id]);
 		} else {
 			this.say("No topic found for this room.");
 		}
 	},
-	
+
 	repeat: function (target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '%') && !user.isDeveloper()) return;
-		let targetRoom = this.room instanceof Users.User ? 'in PM' : this.room.id;
+		if (room instanceof Users.User) {
+			if (!user.isDeveloper()) return;
+		} else {
+			if (!user.hasRank(room, '%') && !user.isDeveloper()) return;
+		}
+		let targetRoom = (room instanceof Users.User) ? 'in PM' : this.room.id;
 		if (targetRoom === 'lobby' && !user.hasRank(room, '@') && !user.isDeveloper()) return;
 		let [interval, times, ...repeatMsg] = target.split('|');
 		if (!(interval && times && repeatMsg.length)) return this.say("/w " + user.name + ", Syntax: ~repeat <interval>| <times>| <target to repeat>");
@@ -169,7 +177,11 @@ let commands = {
 		}
 	},
 	clearrepeat: function (target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '%') && !user.isDeveloper()) return;
+		if (room instanceof Users.User) {
+			if (!user.isDeveloper()) return;
+		} else {
+			if (!user.hasRank(room, '%') && !user.isDeveloper()) return;
+		}
 		let id = target;
 		let database = Storage.getDatabase('global');
 		if (id in database.repeat) {
@@ -179,9 +191,10 @@ let commands = {
 			Storage.exportDatabase('global');
 		} else {return this.say("This message is not being repeated!");}
 	},
-	
+
 	randtopic: function (target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '+')) return;
+		if (room instanceof Users.User) return;
+		if (!user.hasRank(room, '+') && !user.isDeveloper()) return;
 		var pokemonA = require('pokemon-random')();
 		var pokemonB = require('pokemon-random')();
 		var pokemonC = require('pokemon-random')();
@@ -193,12 +206,12 @@ let commands = {
 				"/wall Which Pokémon city or town would you want to live and why?",
 			];
 		}
-			var rand = Tools.sampleOne(questions);
-			this.say(rand);
+		var rand = Tools.sampleOne(questions);
+		this.say(rand);
 	},
-	
+
 	convert: function (target, room, user){
-		if (!user.hasRank(room, '+') && !(room instanceof Users.User) && !user.isDeveloper()) return;
+		if (!(room instanceof Users.User) && !user.hasRank(room, '+') && !user.isDeveloper()) return;
 		var first = target.split(",")[0].toLowerCase();
 		var second = target.split(",")[1].toLowerCase().trim();
 
@@ -268,10 +281,12 @@ let commands = {
 			}
 		}
 	},
-	
+
 	wiki: function(target, room, user) {
-		if (room.id == 'help') return;
-		if (!(room instanceof Users.User) && !user.hasRank(room, '+') && !user.isDeveloper()) return;
+		if (!(room instanceof Users.User)) {
+			if (room.id == 'help') return;
+			if (!user.hasRank(room, '+') && !user.isDeveloper()) return;
+		}
 		(async () => {
 			var res = target.split(", ");
 			if (res[1] !== undefined) {
@@ -285,25 +300,27 @@ let commands = {
 			}
 		})();
 	},
-	
+
 	randwiki: function(target, room, user) {
-		if (room.id == 'help') return;
-                if (!(room instanceof Users.User) && !user.hasRank(room, '+') && !user.isDeveloper()) return;
-                (async () => {
-			if(target) {
+		if (!(room instanceof Users.User)) {
+			if (room.id == 'help') return;
+			if (!user.hasRank(room, '+') && !user.isDeveloper()) return;
+		}
+		(async () => {
+			if (target) {
 				var doc = await wtf.random(target);
 			} else {
-                        	var doc = await wtf.random("en");
+				var doc = await wtf.random("en");
 			}
 			if (doc.sentences(1)) {
-	                        this.say(doc.sentences(0).text()+" "+doc.sentences(1).text()+" [[wiki:"+doc.title()+"]]", true);
+				this.say(doc.sentences(0).text()+" "+doc.sentences(1).text()+" [[wiki:"+doc.title()+"]]", true);
 			}
-                })();
+		})();
 	},
-	
+
 	banword: function(target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '@') && !user.isDeveloper()) return;
 		if (room instanceof Users.User) {
+			if (!user.isDeveloper()) return;
 			var res = target.split("|");
 			if (res.length === 1) {
 				this.say("Format: ~banword room|WORD");
@@ -330,6 +347,7 @@ let commands = {
 				Client.send(roomid+"|/modnote BANWORD ("+msg+") added by "+user.name);
 			}
 		} else {
+			if (!user.hasRank(room, '@') && !user.isDeveloper()) return;
 			let msg = res[1];
 			let database = Storage.getDatabase(room.id);
 			if (!(database.banwords)) {
@@ -349,8 +367,8 @@ let commands = {
 
 	removebanword: "deletebanword",
 	deletebanword: function(target, room, user) {
-		if (!(room instanceof Users.User) && !user.hasRank(room, '@') && !user.isDeveloper()) return;
 		if (room instanceof Users.User) {
+			if (!user.isDeveloper()) return;
 			var res = target.split("|");
 			if (res.length === 1) {
 				this.say("Format: ~deletebanword room|WORD");
@@ -376,6 +394,7 @@ let commands = {
 				Client.send(roomid+"|/modnote BANWORD ("+msg+") removed by "+user.name);
 			}
 		} else {
+			if (!user.hasRank(room, '@') && !user.isDeveloper()) return;
 			let msg = res[1];
 			let database = Storage.getDatabase(room.id);
 			if (!(database.banwords)) {
@@ -391,10 +410,12 @@ let commands = {
 			Client.send(room.id+"|/modnote BANWORD ("+msg+") removed by "+user.name);
 		}
 	},
-	
+
 	recipe: function (target, room, user) {
-		if (room.id == 'help') return;
-		if (!user.hasRank(room, '+') && !(room instanceof Users.User)) return;
+		if (!(room instanceof Users.User)) {
+			if (room.id == 'help') return;
+			if (!user.hasRank(room, '+') && !user.isDeveloper()) return;
+		}
 		target = target.replace(/å/g, 'a');target = target.replace(/ä/g, 'a');
 		function initialize() {
 			// Setting URL and headers for request
@@ -452,11 +473,13 @@ let commands = {
 			}
 		});
 	},
-	
+
 	randdish: "randrecipe",
 	randrecipe: function (target, room, user) {
-		if (room.id == 'help') return;
-		if (!user.hasRank(room, '+') && !(room instanceof Users.User)) return;
+		if (!(room instanceof Users.User)) {
+			if (room.id == 'help') return;
+			if (!user.hasRank(room, '+') && !user.isDeveloper()) return;
+		}
 		var myArray = ['chicken', 'steak', 'pork', 'fish', 'egg', 'tofu', 'artichoke', 'eggplant', 'asparagus', 'cabbage', 'broccoli', 'salad', 'parmesan', 'pizza', 'burger', 'spicy', 'potato', 'ham', 'cheese'];
 		var rand = Tools.sampleOne(myArray);
 
@@ -519,8 +542,10 @@ let commands = {
 	},
 
 	randathlete: function (target, room, user) {
-		if (room.id !== 'lobby' && room.id !== 'sports') return;
-		if (!user.hasRank(room, '+')) return;
+		if (!(room instanceof Users.User)) {
+			if (room.id !== 'lobby' && room.id !== 'sports') return;
+			if (!user.hasRank(room, '+') && !user.isDeveloper()) return;
+		}
 		function initialize() {
 
 			var nfl_teams = ["SF",  "CHI", "CIN", "BUF", "DEN", "CLE", "ARI", "LAC", "KC", "IND", "DAL", "MIA", "PHI", "ATL", "NYG", "JAC", "NYJ", "DET", "GB", "CAR", "MIN", "NEP", "OAK", "LAR", "BAL", "WAS", "NO", "SEA", "PIT", "TB", "HOU", "TEN"];
