@@ -20,8 +20,7 @@ class User {
 		this.name = Tools.toName(name);
 		this.id = id;
 		this.alts = [];
-		this.away = false;
-		this.status = "";
+		this.ranks = {};
 		this.globalRank = " ";
 		/**@type {Map<Room, string>} */
 		this.rooms = new Map();
@@ -46,6 +45,24 @@ class User {
 		}
 		if (!rank) return false;
 		return Config.groups[rank] >= Config.groups[targetRank];
+	}
+	
+	hasGlobalRank(targetRank) {
+		return (Config.groups[this.globalRank] >= Config.groups[targetRank]);
+	}
+
+	hasAnyRank(targetRank) {
+		let user = this;
+		if (Config.groups[user.globalRank] >= Config.groups[targetRank]) {
+			return true;
+		}
+		let returnTrue = false;
+		Object.keys(user.ranks).forEach(function (key) {
+			if (Config.groups[user.ranks[key]] >= Config.groups[targetRank]) {
+				returnTrue = true;
+			}
+		});
+		return returnTrue;
 	}
 
 	/**
