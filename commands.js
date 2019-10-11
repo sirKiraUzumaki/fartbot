@@ -84,14 +84,18 @@ let commands = {
 
 	settopic: function (target, room, user) {
 		if (room instanceof Users.User) {
-			if (!user.isDeveloper()) return;
 			var res = target.split("|");
 			if (res.length === 1) {
+				if (!user.hasAnyRank('@')) return;
 				this.say("Format: ~settopic room|topic");
 			} else {
 				var roomid = res[0].toLowerCase().replace(/\s/g, '');
 				var roomobj = Rooms.rooms[roomid];
-				if (!user.hasRank(roomobj, '@') && !user.isDeveloper()) {this.say("Insufficient privileges."); return;}
+				if (!user.hasRank(roomobj, '@') && !user.isDeveloper()) {
+					if (!user.hasAnyRank('@')) return;
+					this.say("Insufficient privileges.");
+					return;
+				}
 				global.topic[roomid] = res[1];
 				this.say("Topic set in "+roomid+".");
 			}
@@ -104,14 +108,18 @@ let commands = {
 
 	settopichtml: function (target, room, user) {
 		if (room instanceof Users.User) {
-			if (!user.isDeveloper()) return;
 			var res = target.split("|");
 			if (res.length === 1) {
+				if (!user.hasAnyRank('@')) return;
 				this.say("Format: ~settopichtml room|topic");
 			} else {
 				var roomid = res[0].toLowerCase().replace(/\s/g, '');
 				var roomobj = Rooms.rooms[roomid];
-				if (!user.hasRank(roomobj, '@') && !user.isDeveloper()) {this.say("Insufficient privileges."); return;}
+				if (!user.hasRank(roomobj, '@') && !user.isDeveloper()) {
+					if (!user.hasAnyRank('@')) return;
+					this.say("Insufficient privileges.");
+					return;
+				}
 				global.topic[roomid] = "/adduhtml t, "+res[1];
 				this.say("Topic set in "+roomid+".");
 			}
@@ -320,14 +328,15 @@ let commands = {
 
 	banword: function(target, room, user) {
 		if (room instanceof Users.User) {
-			if (!user.isDeveloper()) return;
 			var res = target.split("|");
 			if (res.length === 1) {
+				if (!user.hasAnyRank('@')) return;
 				this.say("Format: ~banword room|WORD");
 			} else {
 				var roomid = res[0].toLowerCase().replace(/\s/g, '');
 				var roomobj = Rooms.rooms[roomid];
 				if (!user.hasRank(roomobj, '@') && !user.isDeveloper()) {
+					if (!user.hasAnyRank('@')) return;
 					this.say("Insufficient privileges.");
 					return;
 				}
@@ -368,14 +377,15 @@ let commands = {
 	removebanword: "deletebanword",
 	deletebanword: function(target, room, user) {
 		if (room instanceof Users.User) {
-			if (!user.isDeveloper()) return;
 			var res = target.split("|");
 			if (res.length === 1) {
+				if (!user.hasAnyRank('@')) return;
 				this.say("Format: ~deletebanword room|WORD");
 			} else {
 				var roomid = res[0].toLowerCase().replace(/\s/g, '');
 				var roomobj = Rooms.rooms[roomid];
 				if (!user.hasRank(roomobj, '@') && !user.isDeveloper()) {
+					if (!user.hasAnyRank('@')) return;
 					this.say("Insufficient privileges.");
 					return;
 				}
