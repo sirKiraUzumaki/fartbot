@@ -33,55 +33,67 @@ class Room {
 	 * @param {string} rank
 	 */
 	onJoin(user, rank) {
-		if (this.id === 'lobby') {
-		this.users.set(user, rank);
+		this.users[user.id] = rank;
+		let nostaff = Object.keys(this.auth).length === 0;
 		if (rank == "#") {
-			global.notified = false;
-			global.online_auth[user.id] = user.name;
+			if (nostaff && this.id === 'lobby') this.say('/modchat ac');
+			this.auth[user.id] = user.name;
+			global.notified[this.id] = false;
 		}
 		if (rank == "@") {
-			global.notified = false;
-			global.online_auth[user.id] = user.name;
+          		if (nostaff && this.id === 'lobby') this.say('/modchat ac');
+            		this.auth[user.id] = user.name;
+            		global.notified[this.id] = false;
 		}
 		if (rank == "%") {
-			global.notified = false;
-			global.online_auth[user.id] = user.name;
+          		if (nostaff && this.id === 'lobby') this.say('/modchat ac');
+            		this.auth[user.id] = user.name;
+            		global.notified[this.id] = false;
 		}
-		}
-		user.rooms.set(this, rank);
+        	user.ranks[this.id] = rank;
+        	user.rooms[this.id] = rank;
+        	this.users[user.id] = user.rank;
 	}
 
 	/**
 	 * @param {User} user
 	 */
 	onLeave(user) {
-		this.users.delete(user);
-		if (this.id === 'lobby') {
-		if (global.online_auth[user.id]) {
-			delete global.online_auth[user.id];
-		}
-			var keys = Array.from(this.users.keys());
-			var names = keys.map(function(item) {
-				return item['id'];
-			});
-			Object.keys(global.online_auth).forEach(function (key) {
-				if (!names.includes(key)) { delete global.online_auth[key]; }
-			});
-		if (Object.keys(global.online_auth).length == 0 && !global.notified) {
-				request.post(webhook, {
-					json: {
-						embeds: [{ "title": "Emergency situation!", "description": "Room has been left unsupervised!" }]
-					}
-				}, (error, res, body) => {
-					if (error) {
-						console.error(error);
-						return;
-					}
-					global.notified = true;
-				});
-		}
-		}
-		user.rooms.delete(this);
+        var room = this;
+        if (this.auth[user.id]) {
+          delete this.auth[user.id];
+        }
+        if (this.id === 'lobby') {
+          const found = Object.keys(this.auth).some(r=> this.auth_list.includes(r));
+          if (!found && !this.msgSent) {
+            setTimeout(function(){
+             const found2 = Object.keys(this.auth).some(r=> this.auth_list.includes(r));
+              //if (!found2 && !this.msgSent) {this.say('/helpticket submit Public Room Assistance Request'); this.msgSent = true;}
+              }, 1000 * 5 * 60);
+          }
+          if (found) {this.msgSent = false;}
+        }
+        let noStaff = Object.keys(this.auth).length == 0;
+        if (noStaff && !global.notified[this.id] && global.notifyTime[this.id] !== new Date().getHours()) {
+          function complete(id){
+            global.notified[this.id] = true;
+            global.notifyTime[this.id] = new Date().getHours();
+          };
+          if (this.id === 'lobby') {
+              this.say('/modchat +');
+              this.say('/wall Since there are no staff online right now, I have set modchat. Please remain calm and wait until staff come back online.');
+                  global.postDiscord('',
+			{json: {
+                  		embeds: [{
+	                  		"title": "Emergency situation!",
+	                  		"description": "Lobby has been left unsupervised!"
+	                  		}]}
+			},
+                    complete, this);
+  	        }
+        	}
+        	delete user.rooms[this.id];
+        	delete this.users[user.id];
 	}
 
 	/**
@@ -89,46 +101,44 @@ class Room {
 	 * @param {string} newName
 	 */
 	onRename(user, newName) {
-		let rank = newName.charAt(0);
-		newName = Tools.toName(newName);
-		let id = Tools.toId(newName);
-		let oldName = user.name;
-		if (id === user.id) {
-			user.name = newName;
-		} else {
-			if (this.id === 'lobby') {
-			if (global.online_auth[user.id]) {
-				delete global.online_auth[user.id];
-			}
-			}
-			delete Users.users[user.id];
-			if (Users.users[id]) {
-				user = Users.users[id];
-				user.name = newName;
-			} else {
-				user.name = newName;
-				user.id = id;
-				Users.users[id] = user;
-			}
-		}
-		this.users.set(user, rank);
-		if (this.id === 'lobby') {
-		if (rank == "#") {
-			global.notified = false;
-			global.online_auth[user.id] = user.name;
-		}
-		if (rank == "@") {
-			global.notified = false;
-			global.online_auth[user.id] = user.name;
-		}
-		if (rank == "%") {
-			global.notified = false;
-			global.online_auth[user.id] = user.name;
-		}
-		}
-		user.rooms.set(this, rank);
-		if (this.game) this.game.renamePlayer(user, oldName);
-		if (this.tour) this.tour.renamePlayer(user, oldName);
+        	let rank = newName.charAt(0);
+        	newName = Tools.toName(newName);
+        	let id = Tools.toId(newName);
+        	let oldName = user.name;
+
+        	if (id !== user.id) {
+          		if (user.id > id) {
+              			var query = `INSERT IGNORE INTO alts (date,old,new) VALUES(NOW(),'` + user.id + `','` + id + `');`; user.alts.push(user.id);
+          		} else {
+              			var query = `INSERT IGNORE INTO alts (date,old,new) VALUES(NOW(),'` + id + `','` + user.id + `');`; user.alts.push(user.id);
+          		}
+          		Tools.query(query, function(err) {});
+        	}
+        	if (id === user.id) {
+            		if (["#", "@", "%"].includes(rank)) this.auth[user.id] = newName;
+            		user.name = newName;
+        	} else {
+            		delete this.users[user.id];
+            		if (this.auth[user.id]) { delete this.auth[user.id]; }
+            		delete Users.users[user.id];
+            		if (Users.users[id]) {
+                		user = Users.users[id];
+                		user.name = newName;
+            		} else {
+                		user.name = newName;
+                		user.id = id;
+                		Users.users[id] = user;
+            		}
+        	}
+        	this.users[user.id] = rank;
+        	if (["#", "@", "%"].includes(rank)) {
+            		global.notified[this.id] = false;
+        		this.auth[user.id] = user.name;
+        	}
+        	user.rooms[this.id] = rank;
+        	user.ranks[this.id] = rank;
+        	if (this.game) this.game.renamePlayer(user, oldName);
+        	if (this.tour && false) this.tour.renamePlayer(user, oldName);
 	}
 
 	/**
@@ -180,7 +190,15 @@ class Rooms {
 		if (!room) {
 			room = new Room(id);
 			this.rooms[id] = room;
+            		if (id !== 'global') {
+                		global.notified[id] = false;
+                		global.notifyTime[id] = -1;
+            		}
 		}
+        	/*if (id === 'help-officerjenny' && !room.msgSent) {
+          		room.msgSent = true;
+          		room.say("I've detected that there are no room staff currently in lobby. Would you mind watching chat?");
+        	};*/
 		return room;
 	}
 
