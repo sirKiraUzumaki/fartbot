@@ -11,7 +11,12 @@
 var https = require('https');
 var homoglyphSearch = require('homoglyph-search');
 
-var bannedWords = [];
+let bannedWords = [];
+let cmd_used = {};
+global.daveSpam = 1;
+setInterval(function() {
+	 global.daveSpam = (global.daveSpam - 1 || 1);
+ }, 60 * 1000);
 
 const capsRegex = new RegExp('[A-Z]', 'g');
 const stretchRegex = new RegExp('(.+)\\1+', 'g');
@@ -436,17 +441,34 @@ class MessageParser {
 	 * @param {number} [time]
 	 */
 	parseCommand(message, room, user, time) {
-
-		if ((user.id=="tenshinagae") && (Math.random() > 0.92)) {
-			//room.say("haha that's so funny tenshi");
-		}
 		
-		if (room instanceof Users.User || room.id === "dreamyard") {
-			if (message.toLowerCase().includes ("hi fartbot")) {
-				room.say("Hi, "+user.name+"!");
+		// Rate limit commands to non-auth to one every 10 seconds.
+		if (cmd_used[user.id] && !user.hasAnyRank('+') && message.charAt(0) === Config.commandCharacter) {
+			if ((Date.now() - cmd_used[user.id]) < 10000) return;
+		}
+		if (!user.hasAnyRank('+') && message.charAt(0) === Config.commandCharacter) cmd_used[user.id] = Date.now();
+	
+		let c_rooms = [];
+		let c_users = [];
+		let v_users = [];
+		if ((c_rooms.includes(room.id) && c_users.includes(user.id)) || global.hidemutes.includes(user.id)) {
+			if (Array.isArray((message.match(/^\/log (.+) was muted/)))) {
+				room.say('/hidealtstext '+(message.match(/^\/log (.+) was muted/))[1]);
 			}
 		}
-	
+
+		if (Array.isArray((message.match(/^\/log (.+) was muted/)))) {
+			room.say('/punishlog '+(message.match(/^\/log (.+) was muted/))[1]);
+		}
+		if (Array.isArray((message.match(/^\/log (.+) was banned/)))) {
+			room.say('/punishlog '+(message.match(/^\/log (.+) was banned/))[1]);
+		}
+
+		if (c_rooms.includes(room.id) && v_users.includes(user.id)) {
+		if (Array.isArray((message.match(/^\/log (.+) was warned/)))) {
+			room.say('/hidealtstext '+(message.match(/^\/log (.+) was warned/))[1]);}
+		}
+		
 		message = message.trim();
 		if (message.charAt(0) !== Config.commandCharacter) return;
 
@@ -533,7 +555,12 @@ class MessageParser {
 	 * @param {number} time
 	 */
 	moderate(message, room, user, time) {
-		//if (!Users.self.hasRank(room, '%')) return;
+		if (Array.isArray(Tools.toId(message).match(/^d+a+v+e$/gi)) && (room.id === 'lobby'|| room.id.startsWith('groupchat-lobby-')) && global.daveSpam !== 4) global.daveSpam = global.daveSpam + 1;
+		if (global.daveSpam === 3 && (room.id === 'lobby' || room.id.startsWith('groupchat-lobby-'))) {
+			room.say('/wall If you receive a PM telling you to say dave in chat, please do not do so and report it.');
+			room.say('/banword add dave');
+			 setTimeout(function(){ room.say('/banword delete dave'); }, 5 * 60 * 1000);
+		}
 		if (typeof Config.allowModeration === 'object') {
 			if (!Config.allowModeration[room.id]) return;
 		} else {
