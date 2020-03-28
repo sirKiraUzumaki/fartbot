@@ -20,7 +20,7 @@ farbot requires [Node.js][3] version 6.0.0 or later and a command line (e.g. `Co
 
 2. Navigate to the root directory
 
-  The remaining steps will take place in the root directory of your farbot files. Navigate there with the command:
+  The remaining steps will take place in the root directory of your fartbot files. Navigate there with the command:
 
   `cd DIRECTORY`
   
