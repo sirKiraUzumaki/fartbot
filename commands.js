@@ -21,6 +21,9 @@ const DAY = 24 * 60 * MINUTE;
 const wtf = require('wtf_wikipedia');
 
 let repeatTimers = {};
+var votes = {};
+var voted = {};
+var poll_used = {};
 var first = true;
 
 /**@type {{[k: string]: Command | string}} */
@@ -594,6 +597,175 @@ let commands = {
 			room.say(html, true);
 		});
 	},
+	
+    tour: function(target, room, user) {
+        var map = {};
+        map["cc1v1"] = "Challenge Cup 1v1";
+        if (room.id !== 'hindi') {
+          map["cc1v1i"] = "Challenge Cup 1v1 (Inverse)";
+          map["cc1v1b"] = "Challenge Cup 1v1 (Blitz)";
+        }
+        map["gen1randombattle"] = "Gen 1 Random Battle";
+        map["gen2randombattle"] = "Gen 2 Random Battle";
+        map["gen3randombattle"] = "Gen 3 Random Battle";
+        map["gen4randombattle"] = "Gen 4 Random Battle";
+        map["gen5randombattle"] = "Gen 5 Random Battle";
+        map["gen6randombattle"] = "Gen 6 Random Battle";
+        map["gen7randombattle"] = "Gen 7 Random Battle";
+        map["gen8randombattle"] = "Gen 8 Random Battle";
+        map["gen8monotyperandombattle"] = "Random Monotype";
+        map["gen8randomdoublesbattle"] = "Random Doubles";
+        map["gen8challengecup2v2"] = "Challenge Cup 2v2";
+        map["gen7superstaffbrosbrawl"] = "Super Staff Bros Brawl";
+        map["cap1v1"] = "CAP 1v1";
+
+        if (!user.hasRank(room, '%') && !user.isDeveloper()) return;
+        if (target.includes('poll end')) {
+            poll_used[room.id] = false;
+            var winner = Object.keys(votes[room.id]).reduce(function(a, b) {
+                return votes[room.id][a] > votes[room.id][b] ? a : b
+            });
+            var html = '/adduhtml poll, <div class="infobox"><p style="margin: 2px 0 5px 0"><span style="border: 1px solid #6a6 ; color: #848 ; border-radius: 4px ; padding: 0 3px"><i class="fa fa-bar-chart"></i> Poll Closed</span><strong style="font-size: 11pt"> What kind of Tournament would you like to play?</strong></p>';
+
+            var keys = Object.keys(votes[room.id]);
+            keys.sort(function(a, b) {
+                return keys[b] - keys[a]
+            });
+            keys.forEach(function(k) {
+                html += '<div style="margin-top: 14px"><strong>' + map[k] + ' (' + votes[room.id][k] + ' votes)</strong></div>';
+            });
+
+            html += '</div>';
+            Client.send(room.id + '|' + html, 1);
+            return;
+        }
+        if (target.includes('start')) {
+            poll_used[room.id] = false;
+            var winner = Object.keys(votes[room.id]).reduce(function(a, b) {
+                return votes[room.id][a] > votes[room.id][b] ? a : b
+            });
+            var html = '/adduhtml poll, <div class="infobox"><p style="margin: 2px 0 5px 0"><span style="border: 1px solid #6a6 ; color: #848 ; border-radius: 4px ; padding: 0 3px"><i class="fa fa-bar-chart"></i> Poll Closed</span><strong style="font-size: 11pt"> What kind of Tournament would you like to play?</strong></p>';
+
+            var keys = Object.keys(votes[room.id]);
+            keys.sort(function(a, b) {
+                return keys[b] - keys[a]
+            });
+            keys.forEach(function(k) {
+                html += '<div style="margin-top: 14px"><strong>' + map[k] + ' (' + votes[room.id][k] + ' votes)</strong></div>';
+            });
+
+            html += '</div>';
+            Client.send(room.id + '|' + html, 1);
+
+            switch (Tools.toId(winner)) {
+                case "cc1v1":
+                    this.say("/tour create cc1v1, elimination, 64", 1);
+                    break;
+                case "cc1v1i":
+                    this.say("/tour create cc1v1, elimination, 64", 1);
+                    this.say("/tour rules inversemod", 2);
+                    this.say("/tour name Inverse CC1V1", 3);
+                    break;
+                case "cc1v1b":
+                    this.say("/tour create cc1v1, elimination, 64", 1);
+                    this.say("/tour rules blitz", 2);
+                    this.say("/tour name CC1V1 Blitz", 3);
+                    break;
+                case "gen1randombattle":
+                    this.say("/tour create gen1randombattle, elimination, 32", 1);
+                    break;
+                case "gen2randombattle":
+                    this.say("/tour create gen2randombattle, elimination, 32", 1);
+                    break;
+                case "gen3randombattle":
+                    this.say("/tour create gen3randombattle, elimination, 32", 1);
+                    break;
+                case "gen4randombattle":
+                    this.say("/tour create gen4randombattle, elimination, 32", 1);
+                    break;
+                case "gen5randombattle":
+                    this.say("/tour create gen5randombattle, elimination, 32", 1);
+                    break;
+                case "gen6randombattle":
+                    this.say("/tour create gen6randombattle, elimination, 32", 1);
+                    break;
+                case "gen7randombattle":
+                    this.say("/tour create gen7randombattle, elimination, 48", 1);
+                    break;
+                case "gen8randombattle":
+                    this.say("/tour create gen8randombattle, elimination, 48", 1);
+                    break;
+                case "gen8monotyperandombattle":
+                    this.say("/tour create gen8monotyperandombattle, elimination, 48", 1);
+                    break;
+                case "gen8randomdoublesbattle":
+                    this.say("/tour create gen8randomdoublesbattle, elimination, 48", 1);
+                    break;
+                case "gen8challengecup2v2":
+                    this.say("/tour create gen8challengecup2v2, elimination, 64", 1);
+                    break;
+                case "gen7superstaffbrosbrawl":
+                    this.say("/tour create gen7superstaffbrosbrawl, elimination, 48", 1);
+                    break;
+                case "cap1v1":
+                    this.say("/tour create cap1v1, elimination, 64", 1);
+                    break;
+            }
+            this.say("/tour autodq 1", 5);
+            this.say("/tour autostart on", 6);
+            this.say("/tour forcetimer on", 7);
+        }
+        if (room.tour) {
+            this.say('This room already has an active tournament.', 1);
+            return;
+        }
+        if (target.includes('cc1v1')) {
+            this.say("/tour create cc1v1, elimination, 64", 1);
+            this.say("/tour autodq 1", 2);
+            this.say("/tour autostart on", 3);
+            this.say("/tour forcetimer on", 4);
+        }
+        if (target.includes('inverse')) {
+            this.say("/tour rules inversemod", 2);
+            this.say("/tour name Inverse CC1V1", 3);
+        }
+        if (target.includes('poll')) {
+            votes[room.id] = {};
+            voted[room.id] = [];
+            if (poll_used[room.id]) {
+                return this.say("There is already a tournament poll in progress.", 1);
+            }
+            poll_used[room.id] = true;
+            var html = '/adduhtml poll, <div class="infobox"><p style="margin: 2px 0 5px 0"><span style="border: 1px solid #6a6 ; color: #848 ; border-radius: 4px ; padding: 0 3px"><i class="fa fa-bar-chart"></i> Tournament Poll</span><strong style="font-size: 11pt"> What kind of Tournament would you like to play?</strong></p>';
+            var formats = [];
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|cc1v1" name="send"> <strong>Challenge Cup 1v1</strong></button></div>');
+            if (room.id !== 'hindi') {
+              formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|cc1v1i" name="send"> <strong>Challenge Cup 1v1 (Inverse)</strong></button></div>');
+              formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|cc1v1b" name="send"> <strong>Challenge Cup 1v1 (Blitz)</strong></button></div>');
+            }
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen1randombattle" name="send"> <strong>Gen 1 Randbats</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen2randombattle" name="send"> <strong>Gen 2 Randbats</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen3randombattle" name="send"> <strong>Gen 3 Randbats</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen4randombattle" name="send"> <strong>Gen 4 Randbats</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen5randombattle" name="send"> <strong>Gen 5 Randbats</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen6randombattle" name="send"> <strong>Gen 6 Randbats</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen7randombattle" name="send"> <strong>Gen 7 Randbats</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen8randombattle" name="send"> <strong>Gen 8 Randbats</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen8monotyperandombattle" name="send"> <strong>Random Monotype</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen8randomdoublesbattle" name="send"> <strong>Random Doubles</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen8challengecup2v2" name="send"> <strong>Challenge Cup 2v2</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|gen7superstaffbrosbrawl" name="send"> <strong>Super Staff Bros Brawl</strong></button></div>');
+            formats.push('<div style="margin-top: 5px"><button class="button" value="/msg Officer Jenny, ~vote ' + room.id + '|cap1v1" name="send"> <strong>CAP 1v1</strong></button></div>');
+            shuffle(formats);
+            formats = formats.slice(0, 4);
+            var i;
+            for (i = 0; i < 4; i++) {
+                html += formats[i];
+            }
+            html += '</div>';
+            Client.send(room.id + '|' + html, 1);
+        }
+    },
 
 
 };
