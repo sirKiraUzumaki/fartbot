@@ -55,7 +55,7 @@ let commands = {
 		if (!Config.allowMail) return;
 		if (!(room instanceof Users.User)) return;
 		let targets = target.split(',');
-		if (targets.length < 2) return this.say("Please use the following format: .mail user, message");
+		if (targets.length < 2) return this.say("Please use the following format: "+Config.commandCharacter+"mail user, message");
 		let to = Tools.toId(targets[0]);
 		if (!to || to.length > 18 || to === Users.self.id || to.startsWith('guest')) return this.say("Please enter a valid username");
 		let message = targets.slice(1).join(',').trim();
